@@ -1,0 +1,24 @@
+# Never commit secrets, model weights, or build/runtime artifacts
+# (doc 37 §11/§13, doc 34). Extend per tier as they land.
+
+# Python (Çekirdek)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+dist/
+build/
+
+# Secrets / local runtime config — never tracked (doc 34)
+.env
+.env.*
+*.key
+*.pem
+
+# OS / editor noise
+.DS_Store
+Thumbs.db

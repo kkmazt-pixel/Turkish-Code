@@ -1,0 +1,56 @@
+# Çekirdek (Python AI-brain sidecar) package + toolchain.
+# Toolchain per doc 36 §5.3 / doc 37 §6: ruff (lint) + black (format) +
+# mypy (strict-ish) + pytest. Authoritative version matrix: doc 33 §5.
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "turkish-code-core"
+version = "0.0.0"
+description = "turkish.code Çekirdek — the Python AI-brain sidecar (doc 09)."
+requires-python = ">=3.12"
+dependencies = []
+
+[project.optional-dependencies]
+# Dev-only; kept minimal (PR: prefer stdlib/existing deps, doc 36 §11).
+dev = [
+    "ruff",
+    "black",
+    "mypy",
+    "pytest",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["turkish_code"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+src = ["turkish_code", "tests"]
+
+[tool.ruff.lint]
+# E/F pycodestyle+pyflakes, I import-sort, UP pyupgrade, B bugbear,
+# T20 flake8-print — bans `print(` in the Çekirdek (doc 09 §16, doc 36 §5.3).
+select = ["E", "F", "I", "UP", "B", "T20"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests may assert on structure without production-strictness noise.
+"tests/**" = ["B"]
+
+[tool.black]
+target-version = ["py312"]
+line-length = 88
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+files = ["turkish_code", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
