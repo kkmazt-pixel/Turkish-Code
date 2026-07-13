@@ -17,7 +17,7 @@ The storage engines and layout, the database taxonomy (App vs Workspace), the co
 
 ## 3. Goals
 
-1. **Embedded, offline, single-file-per-store** persistence — no external DB server ([P1], PR-6).
+1. **Embedded, offline, single-file-per-store** persistence — no external DB server (PR-6).
 2. **One place, clear ownership**: App DB (global) vs Workspace DB (per project), plus blob store + journal (per workspace).
 3. **Durable & transactional** (WAL, fsync where it matters) so crashes don't corrupt ([28](./28_CRASH_RECOVERY.md)).
 4. **Deterministic & reproducible** (PR-15): stable IDs, BLAKE3 content addressing, forward-only migrations.
@@ -37,7 +37,7 @@ The storage engines and layout, the database taxonomy (App vs Workspace), the co
 | **Content-addressed blob store** (filesystem) | snapshots ([27](./27_SNAPSHOTS.md)), large artifacts/outputs | dedup, cheap, streamable; keyed by BLAKE3 |
 | **Append-only Event Journal** (files) | timeline write-ahead + recovery ([26](./26_TIMELINE.md)/[28](./28_CRASH_RECOVERY.md)) | durable ordered log, fsync'd |
 
-Rationale for SQLite-centric design: maximal offline/sovereign simplicity — everything is local files the user owns, no daemon, trivially backed up. Rejected: client-server DBs (Postgres) — violates offline/simplicity; a dedicated vector DB service — same.
+Rationale for SQLite-centric design: maximal embedded-storage simplicity — everything is local files the user owns, no daemon, trivially backed up. This is a storage-layer property, independent of provider routing (which is cloud-primary with a local offline fallback, [52](./52_ADR_LOG.md) ADR-0010). Rejected: client-server DBs (Postgres) — violates embedded-storage simplicity; a dedicated vector DB service — same.
 
 ## 5. Database Taxonomy
 
@@ -116,7 +116,7 @@ depo/
 
 ## 16. Security
 
-- **Hard rules:** (1) **no secrets in any DB/blob/journal** — secrets live only in the OS keychain ([34](./34_API_KEYS.md)); a secret scanner + redaction ([26](./26_TIMELINE.md)/[11](./11_MEMORY_SYSTEM.md)) enforce it. (2) **The user's whole project is never copied here** — only derived metadata + *changed*-file snapshots ([07](./07_DESKTOP_ARCHITECTURE.md) §5 invariant). All storage is **local** ([P1]); optional at-rest encryption of the workspace data dir (OS/user-provided) for extra-sensitive environments. Purge is honored completely (consistent multi-store delete). See [30_SECURITY](./30_SECURITY.md).
+- **Hard rules:** (1) **no secrets in any DB/blob/journal** — secrets live only in the OS keychain ([34](./34_API_KEYS.md)); a secret scanner + redaction ([26](./26_TIMELINE.md)/[11](./11_MEMORY_SYSTEM.md)) enforce it. (2) **The user's whole project is never copied here** — only derived metadata + *changed*-file snapshots ([07](./07_DESKTOP_ARCHITECTURE.md) §5 invariant). All storage is **local**; optional at-rest encryption of the workspace data dir (OS/user-provided) for extra-sensitive environments. Purge is honored completely (consistent multi-store delete). See [30_SECURITY](./30_SECURITY.md).
 
 ## 17. Performance
 

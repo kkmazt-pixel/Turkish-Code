@@ -1,0 +1,47 @@
+# Pre-commit hooks — local, fast checks before a commit lands (doc 36 §9:
+# "Pre-commit hooks run format + fast lint locally"; CI re-runs the same
+# gates authoritatively, doc 36 §16). Python hooks are scoped to core/, the
+# only implemented tier today (doc 37).
+#
+# Setup: pip install pre-commit && pre-commit install
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        args: ["--markdown-linebreak-ext=md"]
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+
+  - repo: https://github.com/psf/black
+    rev: 26.5.1
+    hooks:
+      - id: black
+        files: ^core/
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.21
+    hooks:
+      - id: ruff-check
+        files: ^core/
+      - id: ruff-format
+        files: ^core/
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v2.3.0
+    hooks:
+      - id: mypy
+        # mypy's `files` setting in core/pyproject.toml is resolved relative to
+        # the current working directory, not the config file's location — so
+        # we cd into core/ rather than pass --config-file from the repo root
+        # (matches the exact `mypy` invocation used in core/README.md and CI).
+        entry: bash -c 'cd core && mypy'
+        files: ^core/
+        pass_filenames: false
+        # The hook's env is isolated from core/'s own venv; pytest is needed so
+        # mypy can see its typed fixture decorators when checking tests/.
+        additional_dependencies: ["pytest"]
