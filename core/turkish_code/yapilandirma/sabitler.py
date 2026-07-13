@@ -19,6 +19,10 @@ ENV_DATA_DIR: Final = f"{ENV_PREFIX}DATA_DIR"
 ENV_CACHE_DIR: Final = f"{ENV_PREFIX}CACHE_DIR"
 ENV_LOCALE: Final = f"{ENV_PREFIX}LOCALE"
 ENV_LOG_LEVEL: Final = f"{ENV_PREFIX}LOG_LEVEL"
+ENV_CORE_SESSION_TOKEN: Final = f"{ENV_PREFIX}CORE_SESSION_TOKEN"
+"""Per-session capability token (doc 10 §12), passed at spawn and echoed back
+in ``app.handshake`` — defends against a stray process attaching to a leaked
+pipe. Not a user secret; never logged, never sent to the Arayüz."""
 
 # --- Provider credentials & endpoints (doc 34 §1/§3 — light key handling:
 # outside source code, in env, loaded at startup; never in settings.toml so a

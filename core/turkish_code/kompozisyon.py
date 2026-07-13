@@ -14,9 +14,13 @@ from typing import TextIO
 
 import httpx
 
+from turkish_code import __version__
 from turkish_code.gozlem.collect import InMemoryMetricsCollector, MetricsCollector
 from turkish_code.gunluk.kayitci import Logger, StructuredLogger
 from turkish_code.gunluk.redaksiyon import FieldNameRedactor
+from turkish_code.kanal.aktarim import Transport
+from turkish_code.kanal.sunucu import AsyncCoreChannel
+from turkish_code.kanal.uygulama import register_app_handlers
 from turkish_code.ortak.saat import Clock, SystemClock
 from turkish_code.saglayicilar.cache import InMemoryModelCache, ModelCache
 from turkish_code.saglayicilar.gemini.adapter import create_gemini_provider
@@ -104,6 +108,29 @@ def build_container(
         metrics=InMemoryMetricsCollector(),
         default_cost_mode=CostMode(settings.providers.default_cost_mode),
     )
+
+
+def build_channel(
+    container: Container,
+    transport: Transport,
+    *,
+    session_token: str = "",
+) -> AsyncCoreChannel:
+    """Wire a Core Channel server over ``transport`` for ``container`` (doc 10).
+
+    Registers the ``app.*`` handlers (doc 10 §13/§67); further subsystem
+    handlers (``memory.*``, ``chat.*``, …) are registered the same way as
+    their own subsystems come online — this is additive, not a God object.
+    """
+    channel = AsyncCoreChannel(transport)
+    register_app_handlers(
+        register=channel.register,
+        core_version=__version__,
+        session_token=session_token,
+        provider_manager=container.provider_manager,
+        on_shutdown=channel.request_shutdown,
+    )
+    return channel
 
 
 def _build_providers(

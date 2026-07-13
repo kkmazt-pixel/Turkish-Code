@@ -16,6 +16,10 @@ from turkish_code.hata import AppError, ErrorKind
 
 JSONRPC_VERSION = "2.0"
 
+PROTOCOL_VERSION = "1.0.0"
+"""The Core Channel contract's own semantic version (doc 10 §13), exchanged
+in ``app.handshake`` for major-version compatibility checking."""
+
 RequestId = int | str
 
 
@@ -63,11 +67,18 @@ def code_for_kind(kind: ErrorKind) -> int:
 
 @dataclass(frozen=True, slots=True)
 class Request:
-    """A JSON-RPC request expecting a correlated response (doc 10 §7)."""
+    """A JSON-RPC request expecting a correlated response (doc 10 §7).
+
+    ``meta`` is the doc 10 §6.2 envelope (``sessionId``/``workspaceId``/
+    ``locale``/``effortMode``/``permissionCtx``/``traceId``/``deadlineMs``) —
+    carried opaquely here since none of those subsystems exist yet. Only
+    ``deadlineMs`` is read generically, for request timeout bounding.
+    """
 
     id: RequestId
     method: str
     params: Mapping[str, Any] | None = None
+    meta: Mapping[str, Any] | None = None
 
     def to_wire(self) -> dict[str, Any]:
         """Serialize to the JSON-RPC request envelope."""
@@ -78,7 +89,17 @@ class Request:
         }
         if self.params is not None:
             wire["params"] = dict(self.params)
+        if self.meta is not None:
+            wire["meta"] = dict(self.meta)
         return wire
+
+    @property
+    def deadline_ms(self) -> float | None:
+        """The ``meta.deadlineMs`` budget, if present (doc 10 §6.2/§14)."""
+        if self.meta is None:
+            return None
+        value = self.meta.get("deadlineMs")
+        return float(value) if isinstance(value, (int, float)) else None
 
 
 @dataclass(frozen=True, slots=True)
@@ -135,6 +156,10 @@ class ErrorResponse:
             "id": self.id,
             "error": self.error.to_wire(),
         }
+
+
+Response = SuccessResponse | ErrorResponse
+"""Either a success or a typed error response — a handler's/request's result."""
 
 
 def error_response_from_app_error(

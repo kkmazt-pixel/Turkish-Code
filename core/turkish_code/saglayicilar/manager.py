@@ -35,6 +35,10 @@ class ProviderManager:
         self._cache = cache
         self._clock = clock
 
+    def provider_ids(self) -> Sequence[str]:
+        """The ids of every registered provider (doc 10 §13 handshake)."""
+        return list(self._providers)
+
     def provider(self, provider_id: str) -> Provider:
         """Look up a registered provider by id.
 
