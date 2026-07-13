@@ -24,7 +24,14 @@ from typing import Any
 from turkish_code.ortak.seviye import LogLevel
 from turkish_code.yapilandirma import sabitler
 from turkish_code.yapilandirma.ayarlar import Settings
+from turkish_code.yapilandirma.saglayicilar import ProviderCredentials, ProvidersConfig
 from turkish_code.yapilandirma.yollar import resolve_paths
+from turkish_code.yapilandirma.zeka import (
+    EmbeddingConfig,
+    GraphConfig,
+    MemoryConfig,
+    RetrievalConfig,
+)
 
 WarningSink = Callable[[str], None]
 """Receives a human-readable message when config resolution falls back (doc 33 §13)."""
@@ -47,6 +54,13 @@ def load_settings(
         locale=_resolve_locale(environ, file_values, warn),
         log_level=_resolve_log_level(environ, file_values, warn),
         paths=paths,
+        providers=_resolve_providers(environ, warn),
+        # Intelligence-layer config is schema-only today (doc 11/12/13/14) — no
+        # consumer exists yet, so defaults are used until one needs overrides.
+        memory=MemoryConfig(),
+        graph=GraphConfig(),
+        retrieval=RetrievalConfig(),
+        embedding=EmbeddingConfig(),
     )
 
 
@@ -116,3 +130,49 @@ def _parse_level(name: str, warn: WarningSink, *, source: str) -> LogLevel:
     except ValueError:
         warn(f"unknown {sabitler.KEY_LOG_LEVEL} {name!r} from {source}; using default")
         return sabitler.DEFAULT_LOG_LEVEL
+
+
+def _resolve_providers(
+    environ: Mapping[str, str], warn: WarningSink
+) -> ProvidersConfig:
+    """Provider credentials/endpoints from env only (doc 34 §1), never TOML."""
+    return ProvidersConfig(
+        gemini=_credentials(
+            environ, sabitler.ENV_GEMINI_API_KEY, sabitler.ENV_GEMINI_BASE_URL
+        ),
+        groq=_credentials(
+            environ, sabitler.ENV_GROQ_API_KEY, sabitler.ENV_GROQ_BASE_URL
+        ),
+        openrouter=_credentials(
+            environ, sabitler.ENV_OPENROUTER_API_KEY, sabitler.ENV_OPENROUTER_BASE_URL
+        ),
+        nvidia_nim=_credentials(
+            environ, sabitler.ENV_NVIDIA_NIM_API_KEY, sabitler.ENV_NVIDIA_NIM_BASE_URL
+        ),
+        ollama_base_url=_non_empty(environ, sabitler.ENV_OLLAMA_BASE_URL)
+        or sabitler.DEFAULT_OLLAMA_BASE_URL,
+        default_cost_mode=_resolve_cost_mode(environ, warn),
+    )
+
+
+def _credentials(
+    environ: Mapping[str, str], key_var: str, base_url_var: str
+) -> ProviderCredentials:
+    return ProviderCredentials(
+        api_key=_non_empty(environ, key_var), base_url=_non_empty(environ, base_url_var)
+    )
+
+
+def _non_empty(environ: Mapping[str, str], key: str) -> str | None:
+    value = environ.get(key, "").strip()
+    return value or None
+
+
+def _resolve_cost_mode(environ: Mapping[str, str], warn: WarningSink) -> str:
+    value = environ.get(sabitler.ENV_COST_MODE, "").strip().lower()
+    if not value:
+        return sabitler.DEFAULT_COST_MODE
+    if value not in sabitler.VALID_COST_MODES:
+        warn(f"unknown {sabitler.ENV_COST_MODE} {value!r}; using default")
+        return sabitler.DEFAULT_COST_MODE
+    return value

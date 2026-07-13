@@ -11,7 +11,12 @@ name = "turkish-code-core"
 version = "0.0.0"
 description = "turkish.code Çekirdek — the Python AI-brain sidecar (doc 09)."
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    # Async HTTP client for all provider adapters (doc 21/22) — one library,
+    # hand-rolled request/response shapes per provider (doc 36 §11: prefer
+    # a single dependency over per-vendor SDKs).
+    "httpx>=0.28,<0.29",
+]
 
 [project.optional-dependencies]
 # Dev-only; kept minimal (PR: prefer stdlib/existing deps, doc 36 §11).
@@ -20,6 +25,7 @@ dev = [
     "black",
     "mypy",
     "pytest",
+    "pytest-asyncio",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -54,3 +60,4 @@ files = ["turkish_code", "tests"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+asyncio_mode = "auto"

@@ -9,11 +9,12 @@ from turkish_code.kompozisyon import build_container
 from turkish_code.ortak.saat import Clock
 from turkish_code.ortak.seviye import LogLevel
 from turkish_code.yapilandirma.ayarlar import Settings
-from turkish_code.yapilandirma.yollar import resolve_paths
+from turkish_code.yapilandirma.sabitler import ENV_LOG_LEVEL
+from turkish_code.yapilandirma.yukleyici import load_settings
 
 
 def _settings(level: LogLevel = LogLevel.INFO) -> Settings:
-    return Settings(locale="tr", log_level=level, paths=resolve_paths({}))
+    return load_settings({ENV_LOG_LEVEL: level.name})
 
 
 def test_container_wires_a_working_logger(fixed_clock: Clock) -> None:

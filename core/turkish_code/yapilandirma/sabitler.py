@@ -20,6 +20,33 @@ ENV_CACHE_DIR: Final = f"{ENV_PREFIX}CACHE_DIR"
 ENV_LOCALE: Final = f"{ENV_PREFIX}LOCALE"
 ENV_LOG_LEVEL: Final = f"{ENV_PREFIX}LOG_LEVEL"
 
+# --- Provider credentials & endpoints (doc 34 §1/§3 — light key handling:
+# outside source code, in env, loaded at startup; never in settings.toml so a
+# key can never end up in a config file a user might share/commit). ----------
+ENV_GEMINI_API_KEY: Final = f"{ENV_PREFIX}GEMINI_API_KEY"
+ENV_GEMINI_BASE_URL: Final = f"{ENV_PREFIX}GEMINI_BASE_URL"
+ENV_GROQ_API_KEY: Final = f"{ENV_PREFIX}GROQ_API_KEY"
+ENV_GROQ_BASE_URL: Final = f"{ENV_PREFIX}GROQ_BASE_URL"
+ENV_OPENROUTER_API_KEY: Final = f"{ENV_PREFIX}OPENROUTER_API_KEY"
+ENV_OPENROUTER_BASE_URL: Final = f"{ENV_PREFIX}OPENROUTER_BASE_URL"
+ENV_NVIDIA_NIM_API_KEY: Final = f"{ENV_PREFIX}NVIDIA_NIM_API_KEY"
+ENV_NVIDIA_NIM_BASE_URL: Final = f"{ENV_PREFIX}NVIDIA_NIM_BASE_URL"
+ENV_OLLAMA_BASE_URL: Final = f"{ENV_PREFIX}OLLAMA_BASE_URL"
+ENV_COST_MODE: Final = f"{ENV_PREFIX}COST_MODE"
+
+DEFAULT_OLLAMA_BASE_URL: Final = "http://localhost:11434"
+"""Ollama's own documented local default (doc 22 §5.5) — safe to default since
+it addresses a daemon the user runs on their own machine, unlike the cloud
+providers, which have no hardcoded base URL and must be configured."""
+
+# Valid cost/quota mode strings (doc 17 §4b) — kept as raw strings here (not
+# the yonlendirme.mod.CostMode enum) so this leaf module never depends on the
+# routing layer; the composition root converts/validates at the boundary.
+VALID_COST_MODES: Final[frozenset[str]] = frozenset(
+    {"performance", "balanced", "economy"}
+)
+DEFAULT_COST_MODE: Final = "balanced"
+
 # --- On-disk names (doc 33 §7, doc 39 §7) -------------------------------------
 SETTINGS_FILE_NAME: Final = "settings.toml"
 CORE_LOG_SUBDIR: Final[tuple[str, ...]] = ("logs", "core")
