@@ -36,6 +36,16 @@ class ToolRegistry:
         for tool in tools:
             self.register(tool)
 
+    def unregister(self, name: str) -> None:
+        """Remove the tool registered as ``name``, or raise ``tool_not_found``.
+
+        The inverse of :meth:`register` — lets a plugin's contributions be
+        withdrawn when it is disabled/unloaded (doc 23 §7/§12).
+        """
+        if name not in self._tools:
+            raise tool_not_found(name)
+        del self._tools[name]
+
     def resolve(self, name: str) -> Tool:
         """The tool registered as ``name``, or raise ``tool_not_found`` (doc 20 §11)."""
         tool = self._tools.get(name)

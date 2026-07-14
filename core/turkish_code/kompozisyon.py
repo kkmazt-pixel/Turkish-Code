@@ -15,9 +15,16 @@ from typing import TextIO
 import httpx
 
 from turkish_code import __version__
+from turkish_code.araclar.izin import (
+    PermissionMode,
+    PermissionPolicy,
+    PolicyPermissionGate,
+)
 from turkish_code.araclar.kompozisyon import ToolRuntime, build_tool_runtime
 from turkish_code.depo.alan import StorageEngine
 from turkish_code.depo.yerlesim import StorageLayout
+from turkish_code.eklentiler.izin import PluginGrantStore, PluginPermissionGate
+from turkish_code.eklentiler.kompozisyon import PluginRuntime, build_plugin_runtime
 from turkish_code.gozlem.collect import InMemoryMetricsCollector, MetricsCollector
 from turkish_code.gunluk.kayitci import Logger, StructuredLogger
 from turkish_code.gunluk.redaksiyon import FieldNameRedactor
@@ -64,6 +71,7 @@ class Container:
     metrics: MetricsCollector
     default_cost_mode: CostMode
     tool_runtime: ToolRuntime
+    plugin_runtime: PluginRuntime
 
 
 def build_container(
@@ -102,6 +110,20 @@ def build_container(
         quota_store if quota_store is not None else InMemoryQuotaStore(), resolved_clock
     )
 
+    # Tool + plugin runtimes share one grant store: the Tool Runtime's gate is
+    # plugin-aware, so a plugin tool call must satisfy both its grant and the
+    # session mode (grant ∩ session, doc 23 §6). Default Ask session mode
+    # (doc 24 §5); nothing is loaded or enabled here (doc 23 §9).
+    plugin_grants = PluginGrantStore()
+    tool_gate = PluginPermissionGate(
+        PolicyPermissionGate(PermissionPolicy(mode=PermissionMode.ASK)),
+        plugin_grants,
+    )
+    tool_runtime = build_tool_runtime(gate=tool_gate)
+    plugin_runtime = build_plugin_runtime(
+        tool_runtime.registry, plugin_grants, app_version=__version__
+    )
+
     return Container(
         settings=settings,
         clock=resolved_clock,
@@ -111,10 +133,8 @@ def build_container(
         benchmark_store=InMemoryBenchmarkStore(),
         metrics=InMemoryMetricsCollector(),
         default_cost_mode=CostMode(settings.providers.default_cost_mode),
-        # Tool runtime wired with an empty registry + default Ask-mode gate: no
-        # first-party tools exist yet (doc 20 §7 catalog is future work) and no
-        # subsystem consumes it, but the graph is assembled and injectable today.
-        tool_runtime=build_tool_runtime(),
+        tool_runtime=tool_runtime,
+        plugin_runtime=plugin_runtime,
     )
 
 
