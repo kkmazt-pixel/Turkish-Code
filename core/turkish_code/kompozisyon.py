@@ -15,6 +15,7 @@ from typing import TextIO
 import httpx
 
 from turkish_code import __version__
+from turkish_code.ajanlar.kompozisyon import AgentRuntime, build_agent_runtime
 from turkish_code.araclar.izin import (
     PermissionMode,
     PermissionPolicy,
@@ -72,6 +73,7 @@ class Container:
     default_cost_mode: CostMode
     tool_runtime: ToolRuntime
     plugin_runtime: PluginRuntime
+    agent_runtime: AgentRuntime
 
 
 def build_container(
@@ -123,6 +125,12 @@ def build_container(
     plugin_runtime = build_plugin_runtime(
         tool_runtime.registry, plugin_grants, app_version=__version__
     )
+    # Agent Runtime acts only through the runtimes below: the Tool Runtime
+    # dispatcher (with plugin tools) and the Provider facade (doc 18 §7/§16). No
+    # agents are registered yet; Storage is wired via build_storage (async).
+    agent_runtime = build_agent_runtime(
+        tool_runtime.dispatcher, provider=provider_manager
+    )
 
     return Container(
         settings=settings,
@@ -135,6 +143,7 @@ def build_container(
         default_cost_mode=CostMode(settings.providers.default_cost_mode),
         tool_runtime=tool_runtime,
         plugin_runtime=plugin_runtime,
+        agent_runtime=agent_runtime,
     )
 
 
