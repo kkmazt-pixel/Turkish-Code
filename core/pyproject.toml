@@ -16,9 +16,18 @@ dependencies = [
     # hand-rolled request/response shapes per provider (doc 36 §11: prefer
     # a single dependency over per-vendor SDKs).
     "httpx>=0.28,<0.29",
+    # Content-addressed blob store hashing (doc 29 §6, ADR-B). BLAKE3 is fixed
+    # project-wide for CAS; changing it is a major re-hash migration (doc 29 §24).
+    "blake3>=1.0,<2.0",
 ]
 
 [project.optional-dependencies]
+# Optional vector backend (doc 29 §4, ADR-C). sqlite-vec is loaded at runtime
+# only when present; storage stays fully functional without it (lexical-only),
+# so this is an opt-in extra, never a core dependency.
+vector = [
+    "sqlite-vec>=0.1,<0.2",
+]
 # Dev-only; kept minimal (PR: prefer stdlib/existing deps, doc 36 §11).
 dev = [
     "ruff",
@@ -56,6 +65,13 @@ warn_unreachable = true
 warn_redundant_casts = true
 warn_unused_ignores = true
 files = ["turkish_code", "tests"]
+
+# blake3 (doc 29 §6, ADR-B) and sqlite-vec (doc 29 §4, ADR-C) ship no type
+# stubs; their surfaces we use are tiny and wrapped behind depo/blobs.py and
+# depo/vec.py, so treat the imports as untyped there.
+[[tool.mypy.overrides]]
+module = ["blake3", "sqlite_vec"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

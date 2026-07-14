@@ -24,6 +24,7 @@ from typing import Any
 from turkish_code.ortak.seviye import LogLevel
 from turkish_code.yapilandirma import sabitler
 from turkish_code.yapilandirma.ayarlar import Settings
+from turkish_code.yapilandirma.depolama import StorageConfig
 from turkish_code.yapilandirma.saglayicilar import ProviderCredentials, ProvidersConfig
 from turkish_code.yapilandirma.yollar import resolve_paths
 from turkish_code.yapilandirma.zeka import (
@@ -61,6 +62,9 @@ def load_settings(
         graph=GraphConfig(),
         retrieval=RetrievalConfig(),
         embedding=EmbeddingConfig(),
+        # Storage tunables use durable/safe defaults (doc 29 §12); overrides are
+        # a later increment once the store has consumers that need them tuned.
+        storage=StorageConfig(),
     )
 
 

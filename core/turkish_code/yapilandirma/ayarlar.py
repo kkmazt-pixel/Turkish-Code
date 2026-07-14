@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from turkish_code.ortak.seviye import LogLevel
+from turkish_code.yapilandirma.depolama import StorageConfig
 from turkish_code.yapilandirma.saglayicilar import ProvidersConfig
 from turkish_code.yapilandirma.yollar import Paths
 from turkish_code.yapilandirma.zeka import (
@@ -33,6 +34,7 @@ class Settings:
         graph: Extraction tunables (doc 12 §11) — schema only, unused.
         retrieval: Chunking/fusion tunables (doc 13 §12) — schema only, unused.
         embedding: Batching/cache tunables (doc 14 §11) — schema only, unused.
+        storage: Durable-by-default storage tunables (doc 29 §12).
     """
 
     locale: str
@@ -43,3 +45,4 @@ class Settings:
     graph: GraphConfig
     retrieval: RetrievalConfig
     embedding: EmbeddingConfig
+    storage: StorageConfig

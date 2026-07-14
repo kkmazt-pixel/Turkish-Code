@@ -15,6 +15,8 @@ from typing import TextIO
 import httpx
 
 from turkish_code import __version__
+from turkish_code.depo.alan import StorageEngine
+from turkish_code.depo.yerlesim import StorageLayout
 from turkish_code.gozlem.collect import InMemoryMetricsCollector, MetricsCollector
 from turkish_code.gunluk.kayitci import Logger, StructuredLogger
 from turkish_code.gunluk.redaksiyon import FieldNameRedactor
@@ -108,6 +110,19 @@ def build_container(
         metrics=InMemoryMetricsCollector(),
         default_cost_mode=CostMode(settings.providers.default_cost_mode),
     )
+
+
+async def build_storage(settings: Settings) -> StorageEngine:
+    """Bring durable storage online for ``settings`` (doc 29 §5).
+
+    Opens the App DB and migrates it forward, returning the engine that mints
+    per-workspace stores (``open_workspace``). Async — unlike the pure
+    :func:`build_container` graph it performs I/O (writer threads, migrations),
+    so it is a separate entry point the stateful subsystems draw from as they
+    come online. The caller owns the engine's lifecycle (``aclose``).
+    """
+    layout = StorageLayout(settings.paths.data_dir)
+    return await StorageEngine.open(layout, settings.storage)
 
 
 def build_channel(
