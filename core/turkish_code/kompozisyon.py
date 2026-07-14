@@ -43,6 +43,7 @@ from turkish_code.saglayicilar.openrouter.adapter import create_openrouter_provi
 from turkish_code.saglayicilar.provider import Provider, TierInfo
 from turkish_code.yapilandirma.ayarlar import Settings
 from turkish_code.yapilandirma.saglayicilar import ProviderCredentials
+from turkish_code.yetenekler.kompozisyon import SkillRuntime, build_skill_runtime
 from turkish_code.yonlendirme.benchmark.store import (
     BenchmarkStore,
     InMemoryBenchmarkStore,
@@ -74,6 +75,7 @@ class Container:
     tool_runtime: ToolRuntime
     plugin_runtime: PluginRuntime
     agent_runtime: AgentRuntime
+    skill_runtime: SkillRuntime
 
 
 def build_container(
@@ -131,6 +133,13 @@ def build_container(
     agent_runtime = build_agent_runtime(
         tool_runtime.dispatcher, provider=provider_manager
     )
+    # Skill Runtime acts only through the runtimes below (doc 19 §8/§15): the
+    # Tool Runtime dispatcher (with plugin tools), the Agent Runtime, and the
+    # Provider facade. No skills are loaded yet; Storage is wired via
+    # build_storage (async).
+    skill_runtime = build_skill_runtime(
+        tool_runtime.dispatcher, agents=agent_runtime, provider=provider_manager
+    )
 
     return Container(
         settings=settings,
@@ -144,6 +153,7 @@ def build_container(
         tool_runtime=tool_runtime,
         plugin_runtime=plugin_runtime,
         agent_runtime=agent_runtime,
+        skill_runtime=skill_runtime,
     )
 
 
