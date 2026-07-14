@@ -15,6 +15,7 @@ from typing import TextIO
 import httpx
 
 from turkish_code import __version__
+from turkish_code.araclar.kompozisyon import ToolRuntime, build_tool_runtime
 from turkish_code.depo.alan import StorageEngine
 from turkish_code.depo.yerlesim import StorageLayout
 from turkish_code.gozlem.collect import InMemoryMetricsCollector, MetricsCollector
@@ -62,6 +63,7 @@ class Container:
     benchmark_store: BenchmarkStore
     metrics: MetricsCollector
     default_cost_mode: CostMode
+    tool_runtime: ToolRuntime
 
 
 def build_container(
@@ -109,6 +111,10 @@ def build_container(
         benchmark_store=InMemoryBenchmarkStore(),
         metrics=InMemoryMetricsCollector(),
         default_cost_mode=CostMode(settings.providers.default_cost_mode),
+        # Tool runtime wired with an empty registry + default Ask-mode gate: no
+        # first-party tools exist yet (doc 20 §7 catalog is future work) and no
+        # subsystem consumes it, but the graph is assembled and injectable today.
+        tool_runtime=build_tool_runtime(),
     )
 
 
