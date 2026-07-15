@@ -41,6 +41,10 @@ from turkish_code.saglayicilar.nvidia_nim.adapter import create_nvidia_nim_provi
 from turkish_code.saglayicilar.ollama.adapter import create_ollama_provider
 from turkish_code.saglayicilar.openrouter.adapter import create_openrouter_provider
 from turkish_code.saglayicilar.provider import Provider, TierInfo
+from turkish_code.sohbet.kompozisyon import (
+    ConversationRuntime,
+    build_conversation_runtime,
+)
 from turkish_code.yapilandirma.ayarlar import Settings
 from turkish_code.yapilandirma.saglayicilar import ProviderCredentials
 from turkish_code.yetenekler.kompozisyon import SkillRuntime, build_skill_runtime
@@ -76,6 +80,7 @@ class Container:
     plugin_runtime: PluginRuntime
     agent_runtime: AgentRuntime
     skill_runtime: SkillRuntime
+    conversation_runtime: ConversationRuntime
 
 
 def build_container(
@@ -140,6 +145,10 @@ def build_container(
     skill_runtime = build_skill_runtime(
         tool_runtime.dispatcher, agents=agent_runtime, provider=provider_manager
     )
+    # Conversation Runtime orchestrates turns through the Agent Runtime (doc 09
+    # §7). Memory injection is wired via build_storage (async) → a
+    # RepositoryMemorySource; here there is none, so context is history-only.
+    conversation_runtime = build_conversation_runtime(agent_runtime)
 
     return Container(
         settings=settings,
@@ -154,6 +163,7 @@ def build_container(
         plugin_runtime=plugin_runtime,
         agent_runtime=agent_runtime,
         skill_runtime=skill_runtime,
+        conversation_runtime=conversation_runtime,
     )
 
 
