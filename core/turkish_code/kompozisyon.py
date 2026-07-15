@@ -22,6 +22,10 @@ from turkish_code.araclar.izin import (
     PolicyPermissionGate,
 )
 from turkish_code.araclar.kompozisyon import ToolRuntime, build_tool_runtime
+from turkish_code.calisma_alani.kompozisyon import (
+    WorkspaceRuntime,
+    build_workspace_runtime,
+)
 from turkish_code.depo.alan import StorageEngine
 from turkish_code.depo.yerlesim import StorageLayout
 from turkish_code.eklentiler.izin import PluginGrantStore, PluginPermissionGate
@@ -81,6 +85,7 @@ class Container:
     agent_runtime: AgentRuntime
     skill_runtime: SkillRuntime
     conversation_runtime: ConversationRuntime
+    workspace_runtime: WorkspaceRuntime
 
 
 def build_container(
@@ -149,6 +154,12 @@ def build_container(
     # §7). Memory injection is wired via build_storage (async) → a
     # RepositoryMemorySource; here there is none, so context is history-only.
     conversation_runtime = build_conversation_runtime(agent_runtime)
+    # Workspace Runtime is the top orchestrator (doc 25 §7): it opens workspaces,
+    # each binding an isolated Conversation Runtime plus the shared Agent/Skill/
+    # Plugin facades. Per-workspace Storage is wired via build_storage (async).
+    workspace_runtime = build_workspace_runtime(
+        agents=agent_runtime, skills=skill_runtime, plugins=plugin_runtime
+    )
 
     return Container(
         settings=settings,
@@ -164,6 +175,7 @@ def build_container(
         agent_runtime=agent_runtime,
         skill_runtime=skill_runtime,
         conversation_runtime=conversation_runtime,
+        workspace_runtime=workspace_runtime,
     )
 
 
