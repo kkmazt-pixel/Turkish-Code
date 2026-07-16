@@ -1,0 +1,21 @@
+[workspace]
+resolver = "2"
+members = ["shell-core"]
+exclude = ["shell-app"]
+
+# The Tauri binary crate (`shell-app`) is written and ready but intentionally
+# excluded from the workspace: it depends on the `tauri` crate, which needs the
+# webkit2gtk-4.1 / librsvg / libayatana-appindicator system libraries to compile
+# on Linux. Once those are installed (`sudo pacman -S webkit2gtk-4.1 librsvg
+# libayatana-appindicator`), move `shell-app` from `exclude` into `members` to
+# build and gate it. Until then every gate runs on the pure-Rust `shell-core`
+# library, which holds all the host logic (the bin crate is a thin adapter).
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+rust-version = "1.90"
+
+[workspace.lints.clippy]
+all = "warn"

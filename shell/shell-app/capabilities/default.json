@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Default capability for the main window: the shell's own invoke commands.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}
